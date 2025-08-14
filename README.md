@@ -48,6 +48,7 @@ Ao alcançar níveis avançados (nível ≥6) e reunir **25 dispositivos**, voc�
 - Equilíbrio entre cliques, compras e planejamento.
 - Estratégia para lidar com eventos e desafios inesperados.
 - Aquele irresistível “só mais um clique” que mantém você jogando.
+<a href="https://el3tr1ck.github.io/energy_clicker/energy_clicker.html" style="display:inline-block;padding:10px 20px;background:#0ff;color:#000;border-radius:5px;text-decoration:none;">Jogar Energy Clicker</a>
 
 ---
-[Clique aqui para jogar!!](https://el3tr1ck.github.io/energy_clicker/energy_clicker.html){: .button}
+
