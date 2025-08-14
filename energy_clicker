@@ -1,0 +1,930 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+<title>Energia Clicker — Motor do Universo</title>
+<style>
+  :root{
+    --bg:#0b0f14;
+    --fg:#e8f0ff;
+    --muted:#9fb0c9;
+    --accent:#3fd0ff;
+    --accent-2:#00ffa3;
+    --bad:#ff4d6d;
+    --good:#19e68c;
+    --panel:#111925;
+    --panel-2:#0f1622;
+    --card:#13202f;
+    --shadow:rgba(0,0,0,.5);
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0;overflow:hidden;background:linear-gradient(120deg,var(--bg),#06080d);color:var(--fg);font-family:Inter,system-ui,Segoe UI,Roboto,Arial,sans-serif}
+  button{cursor:pointer;border:0;border-radius:10px;padding:.6rem .9rem;background:var(--accent);color:#00131b;font-weight:700;box-shadow:0 6px 18px var(--shadow);transition:.15s transform,.2s filter}
+  button:disabled{filter:grayscale(.8) brightness(.8);cursor:not-allowed}
+  button:hover{transform:translateY(-2px)}
+  .btn-ghost{background:transparent;color:var(--fg);border:1px solid #2a3b55}
+  .btn-pill{border-radius:999px}
+  .btn-danger{background:var(--bad);color:white}
+  .btn-good{background:var(--good);color:#001b0e}
+  .chip{display:inline-flex;gap:.4rem;align-items:center;background:#0e1928;border:1px solid #203149;color:var(--muted);padding:.25rem .55rem;border-radius:999px;font-size:.8rem}
+
+  /* Layout */
+  .shell{display:grid;grid-template-rows:auto 1fr auto;height:100vh;max-width:1200px;margin:0 auto;gap:.6rem;padding:.6rem}
+  header,footer{background:var(--panel-2);border:1px solid #203149;border-radius:14px;display:flex;align-items:center;gap:.6rem;padding:.5rem .8rem}
+  header{justify-content:space-between}
+  .main{display:grid;grid-template-columns:1.1fr 1.6fr;gap:.6rem;min-height:0}
+  .left,.right{min-height:0;background:var(--panel-2);border:1px solid #203149;border-radius:14px;padding:.6rem;display:flex;flex-direction:column;gap:.6rem}
+  .right{position:relative}
+  .tabs{display:flex;gap:.4rem;flex-wrap:wrap}
+  .tabs button{background:#0f1b2c;color:var(--fg);border:1px solid #203149}
+  .tabs button.active{background:var(--accent);color:#01212b}
+  .panel{position:absolute;inset:.6rem;top:3rem;border-radius:12px;background:var(--panel);border:1px solid #203149;overflow:hidden;display:none}
+  .panel.active{display:flex;flex-direction:column}
+  .panel-header{display:flex;align-items:center;justify-content:space-between;padding:.6rem .8rem;border-bottom:1px solid #203149;background:#0e1725}
+  .panel-body{padding:.6rem .8rem;overflow:auto}
+  .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:.6rem}
+  .store-list{display:grid;grid-template-columns:repeat(2,1fr);gap:.6rem}
+  .card{background:var(--card);border:1px solid #203149;border-radius:12px;padding:.6rem;box-shadow:0 8px 20px var(--shadow);display:flex;flex-direction:column;gap:.4rem}
+  .card h4{margin:.1rem 0 .2rem 0}
+  .card small{color:var(--muted)}
+  .card .row{display:flex;gap:.5rem;align-items:center;justify-content:space-between}
+  .energy-btn{flex:1;display:flex;align-items:center;justify-content:center}
+  .energy-circle{width:260px;height:260px;border-radius:50%;background:radial-gradient(circle at 35% 35%, var(--accent), #0af, #026);position:relative;box-shadow:0 15px 40px rgba(63,208,255,.35), inset 0 0 60px rgba(255,255,255,.2);user-select:none}
+  .energy-circle:active{transform:scale(.98)}
+  .bolt{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:84px;color:#00141b;text-shadow:0 3px 15px rgba(255,255,255,.2)}
+  .stats{display:grid;grid-template-columns:repeat(5,1fr);gap:.6rem}
+  .stat{background:#0e1725;border:1px solid #203149;border-radius:12px;padding:.4rem .6rem;display:flex;flex-direction:column;gap:.2rem}
+  .stat label{font-size:.75rem;color:var(--muted)}
+  .stat b{font-size:1rem}
+
+  .pagination{display:flex;gap:.4rem;justify-content:center;padding:.3rem}
+  .pagination button{padding:.35rem .6rem;font-weight:600}
+
+  .inventory{display:flex;gap:.4rem;flex-wrap:wrap}
+  .inv-item{background:#122033;border:1px solid #203149;border-radius:10px;padding:.25rem .5rem;color:var(--muted);font-size:.82rem}
+
+  /* Modals */
+  .modal{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;padding:1rem;z-index:50}
+  .modal.open{display:flex}
+  .modal .box{width:min(860px,95vw);max-height:85vh;overflow:auto;background:var(--panel);border:1px solid #203149;border-radius:14px;box-shadow:0 24px 60px var(--shadow)}
+  .modal .box header{border-radius:14px 14px 0 0}
+  .modal .box .content{padding:.8rem}
+  .two-col{display:grid;grid-template-columns:1.1fr 1fr;gap:.6rem}
+
+  /* Theme per level */
+  .theme-1{--accent:#3fd0ff;--accent-2:#00ffa3;--panel:#13202f;--panel-2:#0f1622;--card:#142233}
+  .theme-2{--accent:#ff6ad5;--accent-2:#ffe66d;--panel:#2a1633;--panel-2:#1e0f26;--card:#2b1b3d}
+  .theme-3{--accent:#8aff80;--accent-2:#90b4ff;--panel:#152a1c;--panel-2:#0f1f14;--card:#173120}
+  .theme-4{--accent:#ffd166;--accent-2:#06d6a0;--panel:#2f2312;--panel-2:#251b0b;--card:#2d2615}
+  .theme-5{--accent:#c3f53c;--accent-2:#ff82a9;--panel:#11212b;--panel-2:#0c1820;--card:#132532}
+  .theme-6{--accent:#92b4f4;--accent-2:#f2c6de;--panel:#1a2033;--panel-2:#141a28;--card:#1a2238}
+  .theme-7{--accent:#00d1ff;--accent-2:#ffb703;--panel:#081f2d;--panel-2:#061824;--card:#0a2433}
+  .theme-8{--accent:#ff477e;--accent-2:#4cc9f0;--panel:#2b1020;--panel-2:#220b19;--card:#321425}
+  .theme-9{--accent:#80ffdb;--accent-2:#fde74c;--panel:#0d2a26;--panel-2:#0a211e;--card:#11322d}
+  .theme-10{--accent:#fca311;--accent-2:#52d1dc;--panel:#2b1d0d;--panel-2:#22170a;--card:#342410}
+
+  /* Footer */
+  footer{justify-content:space-between}
+  .footer-row{display:flex;gap:.4rem;align-items:center;flex-wrap:wrap}
+</style>
+</head>
+<body class="theme-1">
+  <div class="shell">
+    <header>
+      <div class="footer-row">
+        <span class="chip" id="lvlChip">Nível 1</span>
+        <span class="chip" id="challengeChip" title="Desafios ativos">Sem Desafios</span>
+        <span class="chip" id="eventChip">Sem Evento</span>
+        <span class="chip">Autosave</span>
+      </div>
+      <div class="stats">
+        <div class="stat"><label>Energia</label><b id="energy">0</b></div>
+        <div class="stat"><label>CPC</label><b id="cpc">1</b></div>
+        <div class="stat"><label>CPS</label><b id="cps">0</b></div>
+        <div class="stat"><label>Cliques</label><b id="clicks">0</b></div>
+        <div class="stat"><label>Tempo</label><b id="timePlayed">00:00:00</b></div>
+      </div>
+      <div class="footer-row">
+        <button id="soundBtn" class="btn-pill btn-ghost" title="Som">🔊 Som</button>
+        <button id="saveBtn" class="btn-pill btn-ghost" title="Salvar">💾 Salvar</button>
+        <button id="resetBtn" class="btn-pill btn-danger" title="Resetar">⟲ Reset</button>
+      </div>
+    </header>
+
+    <div class="main">
+      <div class="left">
+        <div class="energy-btn">
+          <div id="clickBtn" class="energy-circle" title="Clique para gerar energia">
+            <div class="bolt">⚡</div>
+          </div>
+        </div>
+        <div class="inventory" id="inventory"></div>
+      </div>
+
+      <div class="right">
+        <div class="tabs">
+          <button class="active" data-tab="loja">Loja</button>
+          <button data-tab="conquistas">Conquistas</button>
+          <button data-tab="objetivos">Objetivos</button>
+          <button data-tab="painel">Painel de Controle</button>
+          <button data-tab="estatisticas">Estatísticas</button>
+        </div>
+
+        <!-- Panels -->
+        <section class="panel active" id="panel-loja">
+          <div class="panel-header">
+            <div class="footer-row">
+              <b>Loja (40 itens por nível)</b>
+              <span class="chip" id="pageInfo">Página 1/4</span>
+            </div>
+            <div class="footer-row">
+              <button class="btn-ghost btn-pill" id="prevPage">◀</button>
+              <button class="btn-ghost btn-pill" id="nextPage">▶</button>
+            </div>
+          </div>
+          <div class="panel-body">
+            <div class="store-list" id="storeList"></div>
+            <div class="pagination">
+              <button class="btn-ghost btn-pill" id="prevPage2">◀ Anterior</button>
+              <button class="btn-ghost btn-pill" id="nextPage2">Próxima ▶</button>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel" id="panel-conquistas">
+          <div class="panel-header"><b>Conquistas</b><span class="chip" id="achCount">0 desbloqueadas</span></div>
+          <div class="panel-body">
+            <div class="grid" id="achievements"></div>
+          </div>
+        </section>
+
+        <section class="panel" id="panel-objetivos">
+          <div class="panel-header"><b>Objetivos</b><span class="chip" id="goalsInfo"></span></div>
+          <div class="panel-body">
+            <div class="grid" id="goals"></div>
+          </div>
+        </section>
+
+        <section class="panel" id="panel-painel">
+          <div class="panel-header">
+            <b>Painel de Controle — Dispositivos do Nível</b>
+            <div class="footer-row">
+              <span class="chip" id="devicesBuilt">0/5 dispositivos</span>
+              <button id="ascendBtn" class="btn-pill" disabled>Subir de Nível</button>
+            </div>
+          </div>
+          <div class="panel-body">
+            <div class="grid" id="deviceCards"></div>
+          </div>
+        </section>
+
+        <section class="panel" id="panel-estatisticas">
+          <div class="panel-header"><b>Estatísticas</b></div>
+          <div class="panel-body">
+            <div class="grid">
+              <div class="card">
+                <h4>Geral</h4>
+                <div id="statsGeneral"></div>
+              </div>
+              <div class="card">
+                <h4>Desafios</h4>
+                <div id="statsChallenges"></div>
+              </div>
+              <div class="card">
+                <h4>Fase Final</h4>
+                <div id="statsEndgame"></div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
+
+    <footer>
+      <div class="footer-row">
+        <span class="chip">v1.0 — Single File</span>
+        <span class="chip">Tema muda a cada nível</span>
+        <span class="chip">Eventos aleatórios</span>
+        <span class="chip">Controle de som</span>
+      </div>
+      <div class="footer-row">
+        <button class="btn-ghost btn-pill" id="helpBtn">❓ Ajuda</button>
+      </div>
+    </footer>
+  </div>
+
+  <!-- Modal: Eventos / Mensagens -->
+  <div class="modal" id="modal">
+    <div class="box">
+      <header>
+        <div class="footer-row"><b id="modalTitle">Evento</b></div>
+      </header>
+      <div class="content" id="modalContent"></div>
+      <div class="footer-row" style="padding:.6rem .8rem;justify-content:flex-end">
+        <button class="btn-pill btn-good" id="modalOk">OK</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+(() => {
+  // ---------- Util ----------
+  const fmt = n => {
+    if (!isFinite(n)) return "∞";
+    if (n < 1000) return Math.floor(n).toString();
+    const units = ["", "K", "M", "B", "T", "Qa", "Qi", "Sx", "Sp", "Oc", "No", "Dc"];
+    let i = 0;
+    let x = n;
+    while (x >= 1000 && i < units.length-1){ x/=1000; i++; }
+    return x.toFixed(2).replace(/\.00$/,"") + units[i];
+  };
+  const byId = id => document.getElementById(id);
+  const rand = (a,b)=> Math.random()*(b-a)+a;
+  const randInt = (a,b)=> Math.floor(rand(a,b+1));
+  const clamp = (v,a,b)=> Math.max(a,Math.min(b,v));
+
+  // ---------- Audio ----------
+  let audioOn = true;
+  const AC = window.AudioContext || window.webkitAudioContext;
+  const actx = new AC();
+  const beep = (f=440, t=0.06, type='sine', gain=0.05) => {
+    if (!audioOn) return;
+    const o=actx.createOscillator(), g=actx.createGain();
+    o.type=type; o.frequency.value=f;
+    g.gain.value=gain;
+    o.connect(g); g.connect(actx.destination);
+    o.start();
+    setTimeout(()=>{o.stop();}, t*1000);
+  };
+
+  // ---------- Game State ----------
+  const state = {
+    energy: 0,
+    totalEnergy: 0,
+    clicks: 0,
+    cpc: 1,
+    cps: 0,
+    level: 1,
+    theme: 1,
+    timeStart: Date.now(),
+    inventory: {}, // key -> qty (upgrades comprados)
+    items: [],     // itens gerados do nível atual (40)
+    page: 1,
+    goals: [],     // 40 objetivos base (persistentes, recontados por nível)
+    achievements: [],
+    devices: [],   // até 5 cards exigindo itens + energia
+    builtDevices: [], // nomes construídos no nível
+    challenges: [],   // debuffs ativos do nível
+    endgame: { started:false, universalMotor:false, phases:0, power:0 },
+    muted:false,
+  };
+
+  // ---------- Data generation ----------
+  const ELECTRO_NAMES = [
+    "Resistor","Capacitor","Indutor","Diodo","Transistor","MOSFET","CI Lógico","Amplificador Op.",
+    "Oscilador","Cristal","Conversor DC-DC","Regulador","Fonte Chaveada","Placa Controladora",
+    "Microcontrolador","CPU","GPU","NPU","Memória RAM","Memória Flash","Sensor Hall","Sensor Temp.",
+    "Sensor Luz","Display OLED","Display LCD","Relé","Driver Motor","Servo","Motor DC","Motor Passo",
+    "Bateria Íon","Supercapacitor","Condutor Super","Fotodiodo","Fototransistor","Laser","LED UV",
+    "Wi-Fi Módulo","RF Módulo","Ethernet PHY","FPGA","ASIC","SoC","Câmera CMOS","IMU","GNSS","Gate Array",
+    "Amplificador RF","Mixer RF","Antena","Conector","PCB Multicamadas","Cooling TEC","Peltier","Heatsink",
+    "Ventoinha","Pasta Térmica","Termistor","Regulador LDO","PLL","DAC","ADC","PMIC","Fonte Linear",
+    "Carregador","Magnetômetro","Acelerômetro","Giroscópio","BMS","SSD","Módulo Bluetooth","UWB Módulo",
+    "Zigbee","LoRa","NRF24","Shield I/O","Backplane","Bus Driver","Multiplexador","Demux","Bridge USB",
+    "Conversor SerDes","Transceptor","Crypto Chip","TPU","DSP","Codec Áudio","H-Bridge","Gate Driver",
+    "Brownout Detector","Watchdog","RTC","Power Gate","Shunt","Hall Driver","Piezo Driver"
+  ];
+
+  const THEMES = 10; // cores predefinidas .theme-1 .. .theme-10
+
+  function genLevelItems(level){
+    // 40 items por nível, com variação de efeitos e escalas de custo
+    const items = [];
+    const baseCost = Math.pow(6, level) * 15;
+    for (let i=0;i<40;i++){
+      const name = (ELECTRO_NAMES[(level*7 + i) % ELECTRO_NAMES.length] || ("Componente "+(i+1))) + " L"+level+"-"+(i+1);
+      const typeRoll = i%5; // 0:cps,1:cpc,2:mult,3:eventResist,4:storage/aux
+      let effect = {};
+      let desc = "";
+      let cost = Math.floor(baseCost * Math.pow(1.22, i) * (1 + (i%7)*0.03));
+      let max = Infinity;
+      if (typeRoll===0){
+        const add = +(0.3 + i*0.05 + level*0.2).toFixed(2);
+        effect.cps = add;
+        desc = `+${add} CPS permanente.`;
+      } else if (typeRoll===1){
+        const add = 1 + Math.floor(i/4) + level;
+        effect.cpc = add;
+        desc = `+${add} CPC (energia por clique).`;
+      } else if (typeRoll===2){
+        const mult = +(1 + 0.02*level + 0.01*Math.floor(i/2)).toFixed(2);
+        effect.mult = mult;
+        desc = `Multiplicador global x${mult} (acumulativo).`;
+        max = 10;
+      } else if (typeRoll===3){
+        const resist = 1 + Math.floor((i+level)/5);
+        effect.eventShield = resist;
+        desc = `Reduz penalidades de eventos/desafios (+${resist} resistência).`;
+        max = 15;
+      } else {
+        // itens utilitários: autoclick, burst, armazenamento de energia (cap), sorte de evento
+        if (i%2===0){
+          const ac = 0.15 + level*0.05 + (i%10)*0.01;
+          effect.autoClick = +ac.toFixed(2);
+          desc = `Autoclick: +${ac.toFixed(2)} cliques/s (afeta CPC).`;
+        } else {
+          const luck = 1 + Math.floor((i+level)/8);
+          effect.luck = luck;
+          desc = `Sorte do evento +${luck} (mais eventos bons).`;
+          max = 20;
+        }
+      }
+      items.push({
+        id: "it"+i,
+        name, cost, baseCost: cost, qty: 0, max, effect, desc
+      });
+    }
+    return items;
+  }
+
+  function genDevices(level){
+    // 5 cards por nível, cada um requer alguns itens + energia
+    const names = [
+      "Matriz de Energia", "Coletor Quântico", "Nó de Resfriamento", "Núcleo de Compressão", "Sintetizador de Vácuo",
+      "Transdutor de Fluxo", "Reator Piezo", "Condensador Dimensional", "Foco de Plasma", "Tecido de Subespaço"
+    ];
+    const res = [];
+    const costE = Math.floor(Math.pow(10, level) * 2000);
+    for (let i=0;i<5;i++){
+      const needItems = [];
+      // precisa de 3 itens diferentes
+      for (let k=0;k<3;k++){
+        const idx = (i*7 + k*3 + level) % 40;
+        needItems.push({ itemIdx: idx, qty: 3 + Math.floor(level*1.5) + i + k });
+      }
+      res.push({
+        name: names[(level+i)%names.length]+" L"+level+"-"+(i+1),
+        energyCost: costE * (1+i*0.4),
+        needItems,
+        built:false
+      });
+    }
+    return res;
+  }
+
+  function genGoals(){
+    // 40 objetivos globais, com escalas grandes para gameplay demorado
+    const gs = [
+      ["Primeira Faísca","Gerar 50 de energia." , s=> s.totalEnergy>=50],
+      ["Primeiro Upgrade","Comprar 1 item.", s=> Object.values(s.inventory).reduce((a,b)=>a+b,0)>=1],
+      ["Cem Cliques","Clicar 100 vezes.", s=> s.clicks>=100],
+      ["CPC 10","Alcançar 10 CPC.", s=> s.cpc>=10],
+      ["CPS 10","Alcançar 10 CPS.", s=> s.cps>=10],
+      ["Mil Energia","Acumular 1.000 energia.", s=> s.energy>=1000],
+      ["Colecionador","Comprar 10 itens.", s=> Object.values(s.inventory).reduce((a,b)=>a+b,0)>=10],
+      ["Engenheiro","Construir 1 dispositivo.", s=> s.builtDevices.length>=1],
+      ["Arquitetar","Construir 3 dispositivos.", s=> s.builtDevices.length>=3],
+      ["Ascensão","Subir para o Nível 2.", s=> s.level>=2],
+      ["Resistente","Ter resistência ≥5.", s=> totalResist()>=5],
+      ["Sorte Grande","Ter sorte ≥5.", s=> totalLuck()>=5],
+      ["Desafio?","Sobreviver a um desafio.", s=> s._survivedChallenge],
+      ["Mega Energia","Acumular 100.000 energia.", s=> s.energy>=100000],
+      ["CPS 100","Alcançar 100 CPS.", s=> s.cps>=100],
+      ["CPC 50","Alcançar 50 CPC.", s=> s.cpc>=50],
+      ["Mãos Rápidas","1.000 cliques.", s=> s.clicks>=1000],
+      ["Construção Completa","Construir 5 dispositivos no nível.", s=> s.builtDevices.length>=5],
+      ["Nível 3","Chegar ao Nível 3.", s=> s.level>=3],
+      ["Nível 4","Chegar ao Nível 4.", s=> s.level>=4],
+      ["Nível 5","Chegar ao Nível 5.", s=> s.level>=5],
+      ["Milhão","Acumular 1.000.000 energia.", s=> s.energy>=1e6],
+      ["Mult x2","Somatório de multiplicadores ≥ x2.", s=> totalMult()>=2],
+      ["Auto 5","Autoclick ≥ 5 cliques/s.", s=> totalAuto()>=5],
+      ["CPS 500","Alcançar 500 CPS.", s=> s.cps>=500],
+      ["CPC 150","Alcançar 150 CPC.", s=> s.cpc>=150],
+      ["Nível 6","Chegar ao Nível 6.", s=> s.level>=6],
+      ["Nível 7","Chegar ao Nível 7.", s=> s.level>=7],
+      ["Nível 8","Chegar ao Nível 8.", s=> s.level>=8],
+      ["Nível 9","Chegar ao Nível 9.", s=> s.level>=9],
+      ["Nível 10","Chegar ao Nível 10.", s=> s.level>=10],
+      ["Giga Energia","Acumular 1e9 energia.", s=> s.energy>=1e9],
+      ["Arquiteto Quântico","Construir 15 dispositivos (total).", s=> (s._devicesTotal||0)>=15],
+      ["Força Total","Somatório de upgrades ≥ 100.", s=> Object.values(s.inventory).reduce((a,b)=>a+b,0)>=100],
+      ["CPS 2000","Alcançar 2000 CPS.", s=> s.cps>=2000],
+      ["CPC 500","Alcançar 500 CPC.", s=> s.cpc>=500],
+      ["AntiEntropia","Superar 3 desafios.", s=> (s._challengesCleared||0)>=3],
+      ["Evento Épico","Obter um evento Épico.", s=> s._epicEvent],
+      ["Pré-Motor","Completar 25 dispositivos totais.", s=> (s._devicesTotal||0)>=25],
+      ["Motor do Universo","Construir o Motor do Universo.", s=> s.endgame.universalMotor===true],
+    ];
+    return gs;
+  }
+
+  // ---------- Challenges (debuffs) ----------
+  const CHALLENGES = [
+    { id:"noise", name:"Ruído Elétrico", desc:"CPC reduzido em 30%.", apply:s=>s._cpcDebuff=.7, remove:s=>s._cpcDebuff=1 },
+    { id:"overheat", name:"Superaquecimento", desc:"CPS reduzido em 40%.", apply:s=>s._cpsDebuff=.6, remove:s=>s._cpsDebuff=1 },
+    { id:"brownout", name:"Queda de Tensão", desc:"Multiplicadores -20%.", apply:s=>s._multDebuff=.8, remove:s=>s._multDebuff=1 },
+    { id:"emi", name:"Interferência EMI", desc:"Eventos bons 50% mais raros.", apply:s=>s._luckDebuff=.5, remove:s=>s._luckDebuff=1 },
+  ];
+
+  // ---------- Events ----------
+  const EVENTS = {
+    GOOD: [
+      {name:"Surto Benéfico", text:"+20% CPS por 30s.", apply:s=>buffTimed("cps",1.2,30)},
+      {name:"Ressonância", text:"+50% CPC por 20s.", apply:s=>buffTimed("cpc",1.5,20)},
+      {name:"Fase Estável", text:"Remove um desafio ativo.", apply:s=>clearOneChallenge()},
+      {name:"Sinergia", text:"+1 multiplicador global (temporário 60s).", apply:s=>buffTimed("mult",1.1,60)}
+    ],
+    BAD: [
+      {name:"Oscilação", text:"-20% CPS por 30s.", apply:s=>buffTimed("cps",0.8,30)},
+      {name:"Ruído", text:"-30% CPC por 20s.", apply:s=>buffTimed("cpc",0.7,20)},
+      {name:"Falha Parcial", text:"Adiciona um desafio aleatório.", apply:s=>applyRandomChallenge()},
+    ],
+    EPIC: [
+      {name:"Eureka Quântico", text:"Energia instantânea = 2h de CPS!", apply:s=>{state.energy += state.cps*7200; state.totalEnergy+=state.cps*7200; state._epicEvent=true; uiFlash('Ganhou energia épica!');}}
+    ]
+  };
+
+  // ---------- Runtime helpers ----------
+  function totalMult(){
+    let m = 1 * (state._multDebuff||1) * (activeBuffs.mult||1);
+    for (const it of state.items){
+      if (it.effect.mult && state.inventory[it.id]){
+        for (let k=0;k<state.inventory[it.id];k++) m *= it.effect.mult;
+      }
+    }
+    return m;
+  }
+  function totalResist(){
+    let r = 0;
+    for (const it of state.items){
+      if (it.effect.eventShield && state.inventory[it.id]) r += it.effect.eventShield * state.inventory[it.id];
+    }
+    return r;
+  }
+  function totalLuck(){
+    let l = (state._luckDebuff||1);
+    for (const it of state.items){
+      if (it.effect.luck && state.inventory[it.id]) l += it.effect.luck * state.inventory[it.id];
+    }
+    return l;
+  }
+  function totalAuto(){
+    let a = 0;
+    for (const it of state.items){
+      if (it.effect.autoClick && state.inventory[it.id]) a += it.effect.autoClick * state.inventory[it.id];
+    }
+    return a;
+  }
+
+  // Buffs temporários
+  const activeBuffs = { cpc:1, cps:1, mult:1 };
+  function buffTimed(kind, factor, seconds){
+    activeBuffs[kind] = (activeBuffs[kind]||1) * factor;
+    setTimeout(()=>{
+      activeBuffs[kind] = activeBuffs[kind]/factor;
+    }, seconds*1000);
+  }
+
+  function applyRandomChallenge(){
+    const available = CHALLENGES.filter(c=>!state.challenges.find(x=>x.id===c.id));
+    if (available.length===0) return;
+    const c = available[randInt(0,available.length-1)];
+    c.apply(state);
+    state.challenges.push(c);
+    showModal("Desafio Ativo", `<p><b>${c.name}</b>: ${c.desc}</p>`);
+    refreshUI();
+  }
+  function clearOneChallenge(){
+    if (state.challenges.length===0) return;
+    const c = state.challenges.splice(0,1)[0];
+    c.remove(state);
+    state._challengesCleared = (state._challengesCleared||0)+1;
+    showModal("Desafio Removido", `<p>O desafio <b>${c.name}</b> foi neutralizado.</p>`);
+    refreshUI();
+  }
+
+  // ---------- Shop / Purchase ----------
+  function canBuy(it){
+    if (it.max !== Infinity && (state.inventory[it.id]||0) >= it.max) return false;
+    return state.energy >= it.cost;
+    }
+  function buy(it){
+    if (!canBuy(it)) return;
+    state.energy -= it.cost;
+    state.totalEnergySpent = (state.totalEnergySpent||0) + it.cost;
+    state.inventory[it.id] = (state.inventory[it.id]||0) + 1;
+    // Recalcular custo (escala)
+    it.cost = Math.floor(it.baseCost * Math.pow(1.17, state.inventory[it.id]));
+    // Efeitos imediatos (CPC/CPS base)
+    if (it.effect.cpc) state.cpc += it.effect.cpc;
+    if (it.effect.cps) state.cps += it.effect.cps;
+    beep(700, .05, 'triangle', .03);
+    refreshUI();
+  }
+
+  // ---------- Devices ----------
+  function canBuildDevice(dv){
+    if (dv.built) return false;
+    if (state.energy < dv.energyCost) return false;
+    // precisa de itens
+    for (const need of dv.needItems){
+      const it = state.items[need.itemIdx];
+      if ((state.inventory[it.id]||0) < need.qty) return false;
+    }
+    return true;
+  }
+  function buildDevice(idx){
+    const dv = state.devices[idx];
+    if (!canBuildDevice(dv)) return;
+    // pagar itens
+    for (const need of dv.needItems){
+      const it = state.items[need.itemIdx];
+      state.inventory[it.id] -= need.qty;
+    }
+    // pagar energia
+    state.energy -= dv.energyCost;
+    dv.built = true;
+    state.builtDevices.push(dv.name);
+    state._devicesTotal = (state._devicesTotal||0) + 1;
+    beep(520,.08,'sawtooth',.04);
+    refreshUI();
+    checkAscendReady();
+  }
+  function checkAscendReady(){
+    const allBuilt = state.devices.every(d=>d.built);
+    byId("ascendBtn").disabled = !allBuilt;
+    byId("devicesBuilt").textContent = `${state.devices.filter(d=>d.built).length}/5 dispositivos`;
+  }
+  function ascend(){
+    if (!state.devices.every(d=>d.built)) return;
+    // custo de ascender adicional
+    const ascendCost = Math.floor(Math.pow(12, state.level) * 50000);
+    if (state.energy < ascendCost){
+      showModal("Ascensão", `<p>Você precisa de <b>${fmt(ascendCost)}</b> de energia para subir de nível.</p>`);
+      return;
+    }
+    state.energy -= ascendCost;
+    state.level++;
+    state.theme = (state.theme % THEMES) + 1;
+    document.body.className = `theme-${state.theme}`;
+    // reseta dispositivos do nível, mantém inventário/itens comprados
+    state.devices = genDevices(state.level);
+    state.builtDevices = [];
+    // novos itens do nível (40) com custos maiores, mas mantém inventário atual
+    state.items = genLevelItems(state.level);
+    state.page = 1;
+    // adicionar um novo desafio automático a cada nível após 2
+    if (state.level>=2 && Math.random()<0.9) applyRandomChallenge();
+    showModal("Novo Nível!", `<p>Bem-vindo ao <b>Nível ${state.level}</b>. Tema atualizado, novos itens na loja e 5 novos dispositivos para construir.</p>`);
+    refreshUI();
+  }
+
+  // ---------- Endgame: Motor do Universo ----------
+  function tryEndgame(){
+    // Requisito simples: completar 5 níveis (niv 6) e possuir 25 dispositivos totais
+    if (!state.endgame.universalMotor && state.level>=6 && (state._devicesTotal||0)>=25){
+      showModal("Projeto Final", `<p>Você desbloqueou o objetivo final: <b>Motor do Universo</b>.</p>
+      <p>Combine seus dispositivos armazenados em uma síntese única. Custo: <b>${fmt( endgameCost() )}</b> energia.</p>`);
+      state.endgame.started=true;
+    }
+  }
+  function endgameCost(){
+    return Math.floor( 2e9 * Math.pow(3, Math.max(0,state.level-6)) );
+  }
+  function buildUniversalMotor(){
+    if (state.endgame.universalMotor) return;
+    const cost = endgameCost();
+    if (state.energy < cost){
+      showModal("Motor do Universo", `<p>Falta energia. Precisa de <b>${fmt(cost)}</b>.</p>`);
+      return;
+    }
+    state.energy -= cost;
+    state.endgame.universalMotor = true;
+    // Fase final: energia por segundo aumenta fortemente multiplicando por dispositivos totais
+    const boost = 1 + (state._devicesTotal||0)*0.25;
+    buffTimed("cps", boost, 3600); // 1h de mega boost
+    showModal("Motor do Universo", `<p>O <b>Motor do Universo</b> foi construído! Seu CPS foi impulsionado por 1 hora (x${boost.toFixed(2)}).</p>`);
+    refreshUI();
+  }
+
+  // ---------- Events scheduler ----------
+  let eventTimer = 0;
+  function tickEvents(dt){
+    eventTimer += dt;
+    const baseInterval = 30; // segundos
+    const luck = totalLuck();
+    const chance = 0.015 + Math.min(0.02, luck*0.0008);
+    if (eventTimer>=baseInterval){
+      eventTimer = 0;
+      if (Math.random() < chance * (state._luckDebuff||1)){
+        // Decide bom/ruim/épico
+        const goodBias = clamp(0.5 + luck*0.02 - (state.challenges.length*0.05), 0.1, 0.9);
+        const epicChance = 0.01 + (luck>=20 ? 0.02 : 0);
+        let pool = EVENTS.BAD;
+        if (Math.random() < epicChance){ pool = EVENTS.EPIC; state._epicEvent=true; }
+        else if (Math.random() < goodBias){ pool = EVENTS.GOOD; }
+        const ev = pool[randInt(0,pool.length-1)];
+        byId("eventChip").textContent = ev.name;
+        showModal("Evento: "+ev.name, `<p>${ev.text}</p>`);
+        ev.apply(state);
+      } else {
+        byId("eventChip").textContent = "Sem Evento";
+      }
+    }
+  }
+
+  // ---------- Game loop ----------
+  let last = performance.now();
+  function loop(now){
+    const dt = (now-last)/1000;
+    last = now;
+
+    // Auto energy: cps base + autoclick afeta CPC
+    const mult = totalMult() * (activeBuffs.mult||1) * (state._multDebuff||1);
+    const cpsEffective = (state.cps * (activeBuffs.cps||1) * (state._cpsDebuff||1)) * mult;
+    const autoClicks = totalAuto();
+    const cpcEffective = (state.cpc * (activeBuffs.cpc||1) * (state._cpcDebuff||1)) * mult;
+    // energia por dt
+    const energyGain = cpsEffective*dt + autoClicks * cpcEffective * dt;
+    state.energy += energyGain;
+    state.totalEnergy += energyGain;
+
+    tickEvents(dt);
+    tryEndgame();
+
+    // UI timers
+    updateTimePlayed();
+    if ((loop._accumUI = (loop._accumUI||0) + dt) >= .25){
+      loop._accumUI = 0;
+      refreshUI();
+    }
+
+    requestAnimationFrame(loop);
+  }
+
+  // ---------- UI ----------
+  function refreshUI(){
+    byId("energy").textContent = fmt(state.energy);
+    const mult = totalMult();
+    const cpsEffective = (state.cps * (activeBuffs.cps||1) * (state._cpsDebuff||1)) * mult + totalAuto() * (state.cpc * (activeBuffs.cpc||1) * (state._cpcDebuff||1)) * mult;
+    byId("cps").textContent = fmt(cpsEffective);
+    byId("cpc").textContent = fmt((state.cpc * (activeBuffs.cpc||1) * (state._cpcDebuff||1)) * mult);
+    byId("clicks").textContent = fmt(state.clicks);
+    byId("lvlChip").textContent = "Nível "+state.level;
+    byId("challengeChip").textContent = state.challenges.length? `${state.challenges.length} Desafio(s)` : "Sem Desafios";
+
+    // Inventory chips
+    const inv = byId("inventory");
+    inv.innerHTML = "";
+    Object.keys(state.inventory).forEach(k => {
+      const it = state.items.find(x=>x.id===k);
+      if (!it || state.inventory[k]<=0) return;
+      const el = document.createElement("span");
+      el.className="inv-item";
+      el.textContent = `${it.name} × ${state.inventory[k]}`;
+      inv.appendChild(el);
+    });
+
+    renderStore();
+    renderGoals();
+    renderAchievements();
+    renderDevices();
+    renderStats();
+    checkAscendReady();
+  }
+
+  function renderStore(){
+    const list = byId("storeList");
+    const page = clamp(state.page,1,4);
+    state.page = page;
+    const perPage = 10;
+    const start = (page-1)*perPage;
+    const items = state.items.slice(start, start+perPage);
+
+    list.innerHTML = "";
+    for (const it of items){
+      const owned = state.inventory[it.id]||0;
+      const can = canBuy(it);
+      const c = document.createElement("div");
+      c.className = "card";
+      c.innerHTML = `
+        <h4>${it.name}</h4>
+        <small>${it.desc}</small>
+        <div class="row"><span class="chip">Custo: ${fmt(it.cost)}</span><span class="chip">Possui: ${owned}/${it.max===Infinity?"∞":it.max}</span></div>
+        <div class="row">
+          <small>${describeEffect(it.effect)}</small>
+          <button ${can?"":"disabled"}>Comprar</button>
+        </div>`;
+      c.querySelector("button").onclick = ()=>buy(it);
+      list.appendChild(c);
+    }
+    byId("pageInfo").textContent = `Página ${page}/4`;
+  }
+
+  function describeEffect(e){
+    const arr = [];
+    if (e.cps) arr.push(`+${e.cps} CPS`);
+    if (e.cpc) arr.push(`+${e.cpc} CPC`);
+    if (e.mult) arr.push(`x${e.mult} global`);
+    if (e.eventShield) arr.push(`Resistência +${e.eventShield}`);
+    if (e.autoClick) arr.push(`Autoclick +${e.autoClick}/s`);
+    if (e.luck) arr.push(`Sorte +${e.luck}`);
+    return arr.join(" · ");
+  }
+
+  function renderGoals(){
+    const g = byId("goals");
+    g.innerHTML = "";
+    let completed = 0;
+    state.goals.forEach((goal,i)=>{
+      const ok = goal.fn(state);
+      if (ok) completed++;
+      const el = document.createElement("div");
+      el.className = "card";
+      el.innerHTML = `<h4>${goal.title}</h4><small>${goal.desc}</small>
+      <div class="row"><span class="chip">${ok?"✅ Concluído":"⏳ Em progresso"}</span></div>`;
+      g.appendChild(el);
+    });
+    byId("goalsInfo").textContent = `${completed}/${state.goals.length} completos`;
+  }
+
+  function renderAchievements(){
+    const a = byId("achievements");
+    a.innerHTML = "";
+    // Espelha objetivos finalizados como conquistas + extras
+    state.achievements = [];
+    state.goals.forEach(goal=>{ if (goal.fn(state)) state.achievements.push(goal.title)});
+    byId("achCount").textContent = `${state.achievements.length} desbloqueadas`;
+    state.achievements.slice(0, 20).forEach(title=>{
+      const el = document.createElement("div");
+      el.className = "card";
+      el.innerHTML = `<h4>🏆 ${title}</h4><small>Parabéns!</small>`;
+      a.appendChild(el);
+    });
+  }
+
+  function renderDevices(){
+    const grid = byId("deviceCards");
+    grid.innerHTML = "";
+    state.devices.forEach((d, idx)=>{
+      const needs = d.needItems.map(n=>{
+        const it = state.items[n.itemIdx];
+        return `${it.name} × ${n.qty}`;
+      }).join("<br>");
+      const can = canBuildDevice(d);
+      const el = document.createElement("div");
+      el.className = "card";
+      el.innerHTML = `
+        <h4>${d.name}</h4>
+        <small>Requisitos:</small>
+        <small>${needs}</small>
+        <div class="row"><span class="chip">Energia: ${fmt(d.energyCost)}</span>
+        <span class="chip">${d.built?"✅ Construído":"⏳ Pendente"}</span></div>
+        <div class="row">
+          <small>Constrói um módulo para o Motor Final.</small>
+          <button ${can?"":"disabled"}>${d.built?"Pronto":"Construir"}</button>
+        </div>`;
+      el.querySelector("button").onclick = ()=> buildDevice(idx);
+      grid.appendChild(el);
+    });
+  }
+
+  function renderStats(){
+    byId("statsGeneral").innerHTML = `
+      <div class="chip">Energia total gerada: ${fmt(state.totalEnergy)}</div>
+      <div class="chip">Energia gasta: ${fmt(state.totalEnergySpent||0)}</div>
+      <div class="chip">Itens totais: ${Object.values(state.inventory).reduce((a,b)=>a+b,0)}</div>
+      <div class="chip">Dispositivos totais: ${state._devicesTotal||0}</div>
+      <div class="chip">Sorte: ${totalLuck()}</div>
+      <div class="chip">Resistência: ${totalResist()}</div>
+    `;
+    byId("statsChallenges").innerHTML = `
+      <div class="chip">Ativos: ${state.challenges.length}</div>
+      ${state.challenges.map(c=>`<div class="chip">${c.name}</div>`).join("")}
+      <div class="chip">Removidos: ${state._challengesCleared||0}</div>
+    `;
+    byId("statsEndgame").innerHTML = `
+      <div class="chip">Iniciado: ${state.endgame.started?"Sim":"Não"}</div>
+      <div class="chip">Motor: ${state.endgame.universalMotor?"Construído":"—"}</div>
+      <button class="btn-pill" onclick="window._buildUM()">Construir Motor do Universo</button>
+    `;
+  }
+
+  // ---------- Tabs ----------
+  document.querySelectorAll(".tabs button").forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      document.querySelectorAll(".tabs button").forEach(b=>b.classList.remove("active"));
+      btn.classList.add("active");
+      const tab = btn.getAttribute("data-tab");
+      document.querySelectorAll(".panel").forEach(p=>p.classList.remove("active"));
+      byId("panel-"+tab).classList.add("active");
+    });
+  });
+
+  // ---------- Modal ----------
+  function showModal(title, html){
+    byId("modalTitle").textContent = title;
+    byId("modalContent").innerHTML = html;
+    byId("modal").classList.add("open");
+  }
+  byId("modalOk").onclick = ()=> byId("modal").classList.remove("open");
+
+  // ---------- Click button ----------
+  byId("clickBtn").addEventListener("click", ()=>{
+    const mult = totalMult();
+    const gain = (state.cpc * (activeBuffs.cpc||1) * (state._cpcDebuff||1)) * mult;
+    state.energy += gain;
+    state.totalEnergy += gain;
+    state.clicks++;
+    beep(440,.03,'square',.02);
+    refreshUI();
+  });
+
+  // Pagination
+  function setPage(p){ state.page = clamp(p,1,4); refreshUI(); }
+  byId("prevPage").onclick = ()=> setPage(state.page-1);
+  byId("nextPage").onclick = ()=> setPage(state.page+1);
+  byId("prevPage2").onclick = ()=> setPage(state.page-1);
+  byId("nextPage2").onclick = ()=> setPage(state.page+1);
+
+  // Ascend + Endgame button
+  byId("ascendBtn").onclick = ascend;
+  window._buildUM = buildUniversalMotor;
+
+  // Sound toggle
+  byId("soundBtn").onclick = ()=>{
+    audioOn = !audioOn;
+    byId("soundBtn").textContent = audioOn ? "🔊 Som" : "🔇 Som";
+    beep(300,.05,'sine',.02);
+  };
+
+  // Save / Load
+  function save(){
+    const data = JSON.stringify(state);
+    localStorage.setItem("energiaClickerSave", data);
+    showModal("Salvo", "<p>Jogo salvo no navegador.</p>");
+  }
+  function load(){
+    const raw = localStorage.getItem("energiaClickerSave");
+    if (!raw) return;
+    try{
+      const s = JSON.parse(raw);
+      Object.assign(state, s);
+      // Ajustes pós-load
+      document.body.className = `theme-${state.theme}`;
+      refreshUI();
+    }catch(e){ console.warn(e); }
+  }
+  byId("saveBtn").onclick = save;
+  byId("resetBtn").onclick = ()=>{
+    localStorage.removeItem("energiaClickerSave");
+    location.reload();
+  };
+
+  // Help
+  byId("helpBtn").onclick = ()=>{
+    showModal("Como Jogar", `<div class="two-col">
+      <div>
+        <p>Clique no orbe ⚡ para gerar energia. Use a <b>Loja</b> para comprar componentes eletrônicos — cada um deixa você mais forte: mais CPC, CPS, multiplicadores, autoclick e resistência a eventos.</p>
+        <p>Construa <b>5 dispositivos</b> no <b>Painel de Controle</b> usando <i>itens + energia</i>. Quando concluir os 5 e tiver energia suficiente, <b>Suba de Nível</b>: o tema muda e novos 40 itens aparecem.</p>
+        <p>Há <b>eventos</b> e <b>desafios</b> que às vezes ajudam e às vezes atrapalham. Compre itens de resistência e sorte para lidar com isso.</p>
+        <p>Objetivo final: construir o <b>Motor do Universo</b>. Reúna dispositivos suficientes (nível ≥ 6 e 25 dispositivos totais) e pague o custo astronômico.</p>
+      </div>
+      <div>
+        <p><b>Dicas</b></p>
+        <ul>
+          <li>Itens mostram exatamente o que fazem; passe páginas da loja (4 páginas).</li>
+          <li>Os custos escalam com a quantidade e com o nível.</li>
+          <li>Autosave está ligado. Você pode salvar manualmente.</li>
+          <li>Evite rolagem: a interface cabe em uma tela. Painéis têm rolagem própria.</li>
+        </ul>
+      </div>
+    </div>`);
+  };
+
+  // Time played
+  function updateTimePlayed(){
+    const sec = Math.floor((Date.now() - state.timeStart)/1000);
+    const hh = String(Math.floor(sec/3600)).padStart(2,'0');
+    const mm = String(Math.floor((sec%3600)/60)).padStart(2,'0');
+    const ss = String(sec%60).padStart(2,'0');
+    byId("timePlayed").textContent = `${hh}:${mm}:${ss}`;
+  }
+
+  // ---------- Init ----------
+  function init(){
+    state.items = genLevelItems(state.level);
+    state.devices = genDevices(state.level);
+    state.goals = genGoals().map(([title,desc,fn])=>({title,desc,fn}));
+    state._cpcDebuff=1; state._cpsDebuff=1; state._multDebuff=1; state._luckDebuff=1;
+    load(); // tenta carregar
+    refreshUI();
+    requestAnimationFrame(loop);
+  }
+  init();
+})();
+</script>
+</body>
+</html>
