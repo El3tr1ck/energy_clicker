@@ -50,4 +50,4 @@ Ao alcançar níveis avançados (nível ≥6) e reunir **25 dispositivos**, voc�
 - Aquele irresistível “só mais um clique” que mantém você jogando.
 
 ---
-
+[Clique aqui para jogar!!](https://el3tr1ck.github.io/energy_clicker/energy_clicker.html){: .button}
